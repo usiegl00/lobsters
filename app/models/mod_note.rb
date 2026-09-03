@@ -161,6 +161,21 @@ class ModNote < ApplicationRecord
     )
   end
 
+  def self.tattle_on_story_origin!(story, reason)
+    create_without_dupe!(
+      moderator: InactiveUser.inactive_user,
+      user: story.user,
+      created_at: Time.current,
+      note: "Attempted to post a story from a #{reason} origin:\n" \
+        "- user joined: #{how_long_ago(story.user.created_at)}\n" \
+        "- url: #{story.url}\n" \
+        "- title: #{story.title}\n" \
+        "- user_is_author: #{story.user_is_author}\n" \
+        "- tags: #{story.tags.map(&:tag).join(" ")}\n" \
+        "- description: #{story.description}\n"
+    )
+  end
+
   def self.tattle_on_traffic_attribution!(story)
     create_without_dupe!(
       moderator: InactiveUser.inactive_user,
