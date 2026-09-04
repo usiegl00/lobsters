@@ -68,7 +68,7 @@ Rails.application.configure do
   # https://hatchbox.relationkit.io/articles/61-accessing-your-server-logs-in-hatchbox
   config.logger = ActiveSupport::BroadcastLogger.new(
     ActiveSupport::Logger.new($stdout),
-    ActiveSupport::Logger.new(Rails.root.join("log/rails.log"))
+    # ActiveSupport::Logger.new(Rails.root.join("log/rails.log"))
   )
   config.logger.formatter = config.log_formatter
 
@@ -78,7 +78,7 @@ Rails.application.configure do
   # SolidQueue log to stdout for hatchbox UI and a file for grep
   config.solid_queue.logger = ActiveSupport::BroadcastLogger.new(
     ActiveSupport::Logger.new($stdout),
-    ActiveSupport::Logger.new(Rails.root.join("log/solid_queue.log"))
+    # ActiveSupport::Logger.new(Rails.root.join("log/solid_queue.log"))
   )
 
   config.cache_store = :solid_cache_store, {shards: [:cache]}
