@@ -485,6 +485,7 @@ DEPENDENCIES
   capybara
   cgi
   commonmarker (~> 2.6.3)
+  concurrent-ruby (~> 1.3)
   crass
   database_cleaner
   database_consistency

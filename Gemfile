@@ -25,7 +25,6 @@ gem "json"
 # deployment
 gem "actionpack-page_caching"
 gem "puma"
-gem "concurrent-ruby", "1.3.8"
 
 # security
 gem "bcrypt"
@@ -85,3 +84,5 @@ group :test, :development do
 end
 
 gem "pg", "~> 1.6"
+
+gem "concurrent-ruby", "~> 1.3"
