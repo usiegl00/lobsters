@@ -82,3 +82,5 @@ group :test, :development do
   gem "vcr"
   gem "webmock" # used to support vcr
 end
+
+gem "pg", "~> 1.6"
