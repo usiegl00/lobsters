@@ -27,7 +27,7 @@ environment ENV.fetch("RAILS_ENV") { "development" }
 # Specifies the `pidfile` that Puma will use.
 pidfile ENV.fetch("PIDFILE") {
   if ENV.fetch("RAILS_ENV") == "production"
-    "/home/deploy/lobsters/shared/tmp/pids/puma.pid"
+    "tmp/puma.pid"
   else
     "tmp/puma.pid"
   end
@@ -40,7 +40,7 @@ pidfile ENV.fetch("PIDFILE") {
 # processes).
 workers ENV.fetch("PUMA_WORKERS") {
   if ENV.fetch("RAILS_ENV") == "production"
-    Etc.nprocessors
+    Concurrent.available_processor_count.floor
   else
     2
   end

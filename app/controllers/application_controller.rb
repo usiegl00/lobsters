@@ -50,9 +50,9 @@ class ApplicationController < ActionController::Base
   rescue_from ActionDispatch::RemoteIp::IpSpoofAttackError do
     render plain: RejectSpoofedIps::MESSAGE, status: :bad_request, content_type: "text/plain"
   end
-  rescue_from ActiveRecord::ConnectionNotEstablished do
-    render plain: "500 The database is not taking our calls.", status: 500, content_type: "text/plain"
-  end
+  #rescue_from ActiveRecord::ConnectionNotEstablished do
+  #  render plain: "500 The database is not taking our calls.", status: 500, content_type: "text/plain"
+  #end
 
   def agent_is_spider?
     ua = request.env["HTTP_USER_AGENT"].to_s

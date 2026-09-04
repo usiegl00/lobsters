@@ -25,6 +25,7 @@ gem "json"
 # deployment
 gem "actionpack-page_caching"
 gem "puma"
+gem "concurrent-ruby", "1.3.8"
 
 # security
 gem "bcrypt"
