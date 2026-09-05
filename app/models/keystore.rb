@@ -34,8 +34,11 @@ class Keystore < ApplicationRecord
 
   def self.incremented_value_for(key, amount = 1)
     validate_input_key(key)
+    value_column = connection.quote_column_name("value")
+    increment_sql = "#{value_column} = #{quoted_table_name}.#{value_column} + excluded.#{value_column}"
+
     Keystore.transaction do
-      Keystore.upsert({key: key, value: amount}, on_duplicate: Arel.sql("value = value + 1"))
+      Keystore.upsert({key: key, value: amount}, on_duplicate: Arel.sql(increment_sql))
       value_for(key)
     end
   end
