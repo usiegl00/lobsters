@@ -135,28 +135,13 @@ class UsersController < ApplicationController
     fc = FlaggedCommenters.new(@interval[:param], 1.day)
     @fc_flagged = fc.commenters.map { |_, c| c[:n_flags] }.sort
     @flagged_user_stats = fc.check_list_for(@showing_user)
-
-    rows = ActiveRecord::Base.connection.exec_query("
-      select
-        n_flags, count(*) as n_users
-      from (
-        select
-          comments.user_id, sum(flags) as n_flags
-        from
-          comments
-        where
-          comments.created_at >= datetime('now', '-#{@interval[:dur]} #{@interval[:intv]}')
-        group by comments.user_id) count_by_user
-      group by 1
-      order by 1 asc;
-    ").rows
-    users = Array.new(@fc_flagged.last.to_i + 1, 0)
-    rows.each { |r| users[r.first] = r.last }
-    @lookup = rows.to_h
+    cutoff = @interval[:dur].send(@interval[:intv].downcase).ago
+    counts_by_user = Comment.where(created_at: cutoff..).group(:user_id).sum(:flags)
+    @lookup = counts_by_user.values.tally
 
     @flagged_comments = @showing_user.comments
       .where({comments: {flags: 1..}})
-      .where("comments.created_at >= ?", "datetime('now', '-#{@interval[:dur]} #{@interval[:intv]}')")
+      .where("comments.created_at >= ?", cutoff)
       .joins(:story)
       .includes(:user, :hat, story: :user)
       .order(id: :desc)

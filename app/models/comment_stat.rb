@@ -11,18 +11,26 @@ class CommentStat < ApplicationRecord
   # Fills daily records for the last 30 days, updating existing rows (in case the job runs don't
   # line up to date boundaries).
   def self.daily_fill!
-    Comment.connection.execute <<~SQL
-      insert or replace into comment_stats (`date`, `average`)
-      with avg_by_date as (
-        select
-          date(created_at, '-5 hours') as date, avg(score) as a
-        from comments
-        where
-          datetime(comments.created_at, '-5 hours') >= datetime('now', '-30 days') and
-          comments.is_deleted = false
-        group by date(created_at, '-5 hours')
-      )
-      select date, a from avg_by_date
-    SQL
+    date_sql = if Comment.connection.adapter_name.downcase.start_with?("postgresql")
+      "(created_at - interval '5 hours')::date"
+    else
+      "date(created_at, '-5 hours')"
+    end
+
+    averages = Comment
+      .where(is_deleted: false)
+      .where("created_at >= ?", 30.days.ago + 5.hours)
+      .group(Arel.sql(date_sql))
+      .average(:score)
+
+    rows = averages.map { |date, average|
+      {
+        date: date,
+        average: average.to_i
+      }
+    }
+    return if rows.empty?
+
+    upsert_all(rows, unique_by: :idx_comment_stats_on_date)
   end
 end

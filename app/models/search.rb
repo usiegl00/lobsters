@@ -210,7 +210,7 @@ class Search
       query.order!(id: :desc)
     when :relevance
       # relevance is undefined without search terms so sort by score
-      if terms.any?
+      if terms.any? && !FullTextSearch.postgresql?
         query.order!(:rank)
       else
         query.order!(score: :desc)
@@ -314,7 +314,7 @@ class Search
       query.order!(id: :desc)
     when :relevance
       # relevance is undefined without search terms so sort by score
-      if terms.any?
+      if terms.any? && !FullTextSearch.postgresql?
         query.order!(:rank)
       else
         query.order!(score: :desc)

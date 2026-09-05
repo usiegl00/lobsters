@@ -11,7 +11,9 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
-  execute("CREATE COLLATION IF NOT EXISTS \"NOCASE\" (provider = icu, locale = 'und-u-ks-level2', deterministic = false);")
+  if ActiveRecord::Base.connection.adapter_name.downcase.start_with?("postgresql")
+    execute("CREATE COLLATION IF NOT EXISTS \"NOCASE\" (provider = icu, locale = 'und-u-ks-level2', deterministic = false);")
+  end
 
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -607,8 +609,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
   add_foreign_key "votes", "stories"
   add_foreign_key "votes", "users"
 
-  # Virtual tables defined in this database.
-  # Note that virtual tables may not work with other database engines. Be careful if changing database.
-  create_virtual_table "comments_fts", "fts5", ["comment", "content=''", "contentless_delete=1"]
-  create_virtual_table "story_texts_fts", "fts5", ["title", "description", "body", "content=''", "contentless_delete=1"]
+  if ActiveRecord::Base.connection.adapter_name.downcase.include?("sqlite")
+    # Virtual tables defined in this database.
+    # Note that virtual tables may not work with other database engines. Be careful if changing database.
+    create_virtual_table "comments_fts", "fts5", ["comment", "content=''", "contentless_delete=1"]
+    create_virtual_table "story_texts_fts", "fts5", ["title", "description", "body", "content=''", "contentless_delete=1"]
+  end
 end

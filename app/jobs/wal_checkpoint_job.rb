@@ -3,6 +3,8 @@ class WalCheckpointJob < ApplicationJob
   queue_as :default
 
   def perform(*args)
+    return unless ActiveRecord::Base.connection.adapter_name.downcase.include?("sqlite")
+
     # https://www.sqlite.org/pragma.html#pragma_wal_checkpoint
     stats = ActiveRecord::Base.connection.execute("PRAGMA wal_checkpoint(NOOP)").first
 

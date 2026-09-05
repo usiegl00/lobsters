@@ -110,8 +110,9 @@ class Story < ApplicationRecord
   scope :top, ->(user, length, exclude_tags = nil) {
     raise ArgumentError, "Invalid interval" unless IntervalHelper::TIME_INTERVALS.value?(length[:intv].capitalize)
 
+    cutoff = length[:dur].send(length[:intv].downcase).ago
     top = base(user)
-      .where("created_at >= datetime('now', '-#{length[:dur]} #{length[:intv].upcase}')")
+      .where(created_at: cutoff..)
       .filter_tags(exclude_tags || [])
     top.order(score: :desc)
   }
@@ -212,8 +213,12 @@ class Story < ApplicationRecord
   }
 
   scope :search, ->(query) {
-    joins("join story_texts_fts idx on stories.id = idx.rowid")
-      .where("story_texts_fts match ?", query)
+    if FullTextSearch.postgresql?
+      FullTextSearch.postgresql_search(joins(:story_text), StoryText.table_name, [:title, :description, :body], query)
+    else
+      joins("join story_texts_fts idx on stories.id = idx.rowid")
+        .where("story_texts_fts match ?", query)
+    end
   }
 
   include Token

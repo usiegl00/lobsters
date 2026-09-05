@@ -8,27 +8,41 @@ module TrafficHelper
   PERIOD_LENGTH = 15 # minutes
   CACHE_FOR = 5 # minutes
 
+  def self.timestamp_period_sql(column, div)
+    column = case column
+    when "votes.updated_at", "comments.created_at", "stories.created_at"
+      column
+    else
+      raise ArgumentError, "invalid timestamp column"
+    end
+
+    if ActiveRecord::Base.connection.adapter_name.downcase.start_with?("postgresql")
+      "floor(extract(epoch from #{column}) / #{div})"
+    else
+      "floor(unixepoch(#{column}) / #{div})"
+    end
+  end
+
   def self.traffic_range
     div = PERIOD_LENGTH * 60
     start_at = 90.days.ago
-    result = ActiveRecord::Base.connection.select_all <<-SQL
-      select
-        min(activity) as low,
-        max(activity) as high
-      from
-        (select
-          -- from_unixtime(s.period * #{div}) as "at",
-          -- s.period,
-          v.n_votes + (c.n_comments * 10) + (s.n_stories * 20) AS activity
-        from
-          (SELECT count(1) AS n_votes,    floor(unixepoch(updated_at)/#{div}) AS period FROM votes    WHERE updated_at >= '#{start_at}' GROUP BY period) v,
-          (SELECT count(1) AS n_comments, floor(unixepoch(created_at)/#{div}) AS period FROM comments WHERE created_at >= '#{start_at}' GROUP BY period) c,
-          (SELECT count(1) AS n_stories,  floor(unixepoch(created_at)/#{div}) AS period FROM stories  WHERE created_at >= '#{start_at}' GROUP BY period) s
-        where
-          s.period = c.period and
-          s.period = v.period) act;
-    SQL
-    result.to_a.first.values
+    votes_by_period = Vote
+      .where(updated_at: start_at..)
+      .group(Arel.sql(timestamp_period_sql("votes.updated_at", div)))
+      .count
+    comments_by_period = Comment
+      .where(created_at: start_at..)
+      .group(Arel.sql(timestamp_period_sql("comments.created_at", div)))
+      .count
+    stories_by_period = Story
+      .where(created_at: start_at..)
+      .group(Arel.sql(timestamp_period_sql("stories.created_at", div)))
+      .count
+
+    activities = (votes_by_period.keys & comments_by_period.keys & stories_by_period.keys).map { |period|
+      votes_by_period.fetch(period) + (comments_by_period.fetch(period) * 10) + (stories_by_period.fetch(period) * 20)
+    }
+    [activities.min, activities.max]
   end
 
   def self.cache_traffic!
@@ -40,13 +54,9 @@ module TrafficHelper
 
   def self.current_activity
     start_at = PERIOD_LENGTH.minutes.ago.utc
-    result = ActiveRecord::Base.connection.select_all <<-SQL
-      select
-        (SELECT count(1) AS n_votes   FROM votes    WHERE updated_at >= '#{start_at}') +
-        (SELECT count(1) AS n_comment FROM comments WHERE created_at >= '#{start_at}') * 10 +
-        (SELECT count(1) AS n_stories FROM stories  WHERE created_at >= '#{start_at}') * 20
-    SQL
-    result.to_a.first.first.second
+    Vote.where(updated_at: start_at..).count +
+      (Comment.where(created_at: start_at..).count * 10) +
+      (Story.where(created_at: start_at..).count * 20)
   end
 
   def self.current_intensity(low, high)

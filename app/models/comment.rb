@@ -98,8 +98,12 @@ class Comment < ApplicationRecord
     ) : where("true")
   }
   scope :search, ->(query) {
-    joins("join comments_fts idx on comments.id = idx.rowid")
-      .where("comments_fts match ?", query)
+    if FullTextSearch.postgresql?
+      FullTextSearch.postgresql_search(all, table_name, [:comment], query)
+    else
+      joins("join comments_fts idx on comments.id = idx.rowid")
+        .where("comments_fts match ?", query)
+    end
   }
 
   FLAGGABLE_DAYS = 7
@@ -369,14 +373,25 @@ class Comment < ApplicationRecord
     # assigned sequentially, mostly the tiebreaker sorts earlier comments sooner. We average ~200
     # comments per weekday so seeing rollover between sibling comments is rare. Importantly, even
     # when it is 'wrong', it gives a stable sort.
-    update_query = <<~SQL
-      UPDATE comments SET
-        score = (select coalesce(sum(vote), 0) from votes where comment_id = comments.id),
-        flags = (select count(*) from votes where comment_id = comments.id and vote = -1),
-        confidence = ?,
-        confidence_order = unhex(?)
-      WHERE id = ?
-    SQL
+    update_query = if FullTextSearch.postgresql?
+      <<~SQL
+        UPDATE comments SET
+          score = (select coalesce(sum(vote), 0) from votes where comment_id = comments.id),
+          flags = (select count(*) from votes where comment_id = comments.id and vote = -1),
+          confidence = ?,
+          confidence_order = decode(?, 'hex')
+        WHERE id = ?
+      SQL
+    else
+      <<~SQL
+        UPDATE comments SET
+          score = (select coalesce(sum(vote), 0) from votes where comment_id = comments.id),
+          flags = (select count(*) from votes where comment_id = comments.id and vote = -1),
+          confidence = ?,
+          confidence_order = unhex(?)
+        WHERE id = ?
+      SQL
+    end
     Comment.connection.exec_update(update_query, nil, [new_confidence, Comment.confidence_order(new_confidence, id), id])
     story.update_cached_columns
   end
@@ -573,25 +588,48 @@ class Comment < ApplicationRecord
       .limit(20)
       .pluck(:thread_id)
     return Comment.none if thread_ids.empty?
+    thread_filter = sanitize_sql_array(["thread_id in (?)", thread_ids])
 
-    inner_join = <<~SQL
-      inner join (
-        with recursive discussion as (
-          select
-            c.id,
-            cast(confidence_order as blob) as confidence_order_path
-          from comments c
-          where thread_id in (#{thread_ids.join(", ")}) and parent_comment_id is null
-          union all
-          select
-            c.id,
-            cast(concat(substring(discussion.confidence_order_path, 1, 3 * (depth + 1)), c.confidence_order) as blob)
-          from comments c join discussion on c.parent_comment_id = discussion.id
-        )
-        select * from discussion
-      ) discussions
-      on comments.id = discussions.id
-    SQL
+
+    inner_join = if FullTextSearch.postgresql?
+      <<~SQL
+        inner join (
+          with recursive discussion as (
+            select
+              c.id,
+              c.confidence_order as confidence_order_path
+            from comments c
+            where #{thread_filter} and parent_comment_id is null
+            union all
+            select
+              c.id,
+              substring(discussion.confidence_order_path from 1 for 3 * (c.depth + 1)) || c.confidence_order
+            from comments c join discussion on c.parent_comment_id = discussion.id
+          )
+          select * from discussion
+        ) discussions
+        on comments.id = discussions.id
+      SQL
+    else
+      <<~SQL
+        inner join (
+          with recursive discussion as (
+            select
+              c.id,
+              cast(confidence_order as blob) as confidence_order_path
+            from comments c
+            where #{thread_filter} and parent_comment_id is null
+            union all
+            select
+              c.id,
+              cast(concat(substring(discussion.confidence_order_path, 1, 3 * (depth + 1)), c.confidence_order) as blob)
+            from comments c join discussion on c.parent_comment_id = discussion.id
+          )
+          select * from discussion
+        ) discussions
+        on comments.id = discussions.id
+      SQL
+    end
 
     Comment.joins(inner_join).where(thread_id: thread_ids).order("comments.thread_id desc, discussions.confidence_order_path")
   end
@@ -600,25 +638,48 @@ class Comment < ApplicationRecord
     return Comment.none unless story.id # unsaved Stories have no comments
 
     story_ids = [story.id] + Story.where(merged_story_id: story.id).pluck(:id)
+    story_filter = sanitize_sql_array(["story_id in (?)", story_ids])
 
-    inner_join = <<~SQL
-      inner join (
-        with recursive confidence as (
-          select
-            c.id,
-            cast(confidence_order as blob) as confidence_order_path
-            from comments c
-            where story_id in (#{story_ids.join(", ")}) and +parent_comment_id is null
-          union all
-          select
-            c.id,
-            cast(concat(substring(confidence.confidence_order_path, 1, 3 * (depth + 1)), c.confidence_order) as blob)
-          from comments c join confidence on c.parent_comment_id = confidence.id
-        )
-        select * from confidence
-      ) confidence
-      on comments.id = confidence.id
-    SQL
+
+    inner_join = if FullTextSearch.postgresql?
+      <<~SQL
+        inner join (
+          with recursive confidence as (
+            select
+              c.id,
+              c.confidence_order as confidence_order_path
+              from comments c
+              where #{story_filter} and +parent_comment_id is null
+            union all
+            select
+              c.id,
+              substring(confidence.confidence_order_path from 1 for 3 * (c.depth + 1)) || c.confidence_order
+            from comments c join confidence on c.parent_comment_id = confidence.id
+          )
+          select * from confidence
+        ) confidence
+        on comments.id = confidence.id
+      SQL
+    else
+      <<~SQL
+        inner join (
+          with recursive confidence as (
+            select
+              c.id,
+              cast(confidence_order as blob) as confidence_order_path
+              from comments c
+              where #{story_filter} and +parent_comment_id is null
+            union all
+            select
+              c.id,
+              cast(concat(substring(confidence.confidence_order_path, 1, 3 * (depth + 1)), c.confidence_order) as blob)
+            from comments c join confidence on c.parent_comment_id = confidence.id
+          )
+          select * from confidence
+        ) confidence
+        on comments.id = confidence.id
+      SQL
+    end
 
     Comment.joins(inner_join).where(story_id: story_ids).order("confidence.confidence_order_path")
   end

@@ -65,9 +65,15 @@ class Vote < ApplicationRecord
   end
 
   def self.comment_vote_summaries(comment_ids)
+    usernames = if connection.adapter_name.downcase.start_with?("postgresql")
+      "string_agg(username, ', ')"
+    else
+      "group_concat(username, ', ')"
+    end
+
     Vote
       .joins(:user)
-      .select("comment_id, reason, count(1) as count, group_concat(username, ', ') as usernames")
+      .select("comment_id, reason, count(1) as count, #{usernames} as usernames")
       .where(comment_id: comment_ids)
       .where.not(reason: "")
       .group(:comment_id, :reason)

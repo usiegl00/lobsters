@@ -22,25 +22,29 @@ class FlaggedCommenters
   # aggregates for all commenters; not just those receiving flags
   def aggregates
     Rails.cache.fetch("aggregates_#{interval}_#{cache_time}", expires_in: cache_time) {
-      ActiveRecord::Base.connection.exec_query("
-        select
-          stddev(sum_flags) as stddev,
-          sum(sum_flags) as sum,
-          avg(sum_flags) as avg,
-          avg(n_comments) as n_comments,
-          count(*) as n_commenters
-        from (
-          select
-            sum(flags) as sum_flags,
-            count(*) as n_comments
-          from comments join users on comments.user_id = users.id
-          where
-            (comments.created_at >= '#{period}') and
-            users.banned_at is null and
-            users.deleted_at is null
-          GROUP BY comments.user_id
-        ) sums;
-      ").first.symbolize_keys!
+      rows = Comment
+        .joins(:user)
+        .where(created_at: period..)
+        .where(users: {banned_at: nil, deleted_at: nil})
+        .group(:user_id)
+        .pluck(Arel.sql("sum(comments.flags)"), Arel.sql("count(*)"))
+
+      sum_flags = rows.map { |row| row.first.to_f }
+      sum = sum_flags.sum
+      avg = sum_flags.empty? ? nil : sum / sum_flags.length
+      stddev = if sum_flags.empty?
+        nil
+      else
+        Math.sqrt(sum_flags.sum { |value| (value - avg)**2 } / sum_flags.length)
+      end
+
+      {
+        stddev: stddev,
+        sum: sum,
+        avg: avg,
+        n_comments: (rows.empty? ? nil : rows.sum { |row| row.second.to_f } / rows.length),
+        n_commenters: rows.length
+      }
     }
   end
 

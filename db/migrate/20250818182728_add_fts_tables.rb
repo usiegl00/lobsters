@@ -6,6 +6,8 @@
 # want a PR to 'fix' migrations.
 class AddFtsTables < ActiveRecord::Migration[8.0]
   def change
+    return unless ActiveRecord::Base.connection.adapter_name.downcase.include?("sqlite")
+
     # create preferred contentless-delete tables as described in:
     # https://www.sqlite.org/fts5.html#contentless_delete_tables
     create_virtual_table :comments_fts, :fts5, ["comment", "content=''", "contentless_delete=1"]
