@@ -1,8 +1,8 @@
 class StoryTextSearching < ActiveRecord::Migration[7.0]
   def change
-    remove_index :stories, name: "index_stories_on_title"
-    remove_index :stories, name: "index_stories_on_description"
-    remove_index :story_texts, name: "index_story_texts_on_body"
+    remove_index :stories, name: "idx_stories_on_title"
+    remove_index :stories, name: "idx_stories_on_description"
+    remove_index :story_texts, name: "idx_story_texts_on_body"
 
     add_column :story_texts, :title, :string, limit: 150, default: "", null: false, after: :id
     add_column :story_texts, :description, :text, size: :medium, after: :title

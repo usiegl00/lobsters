@@ -1,8 +1,8 @@
 class AddUniqueIndexesToLinks < ActiveRecord::Migration[8.0]
   INDEXES_PARAMS = [
-    [:links, [:url, :from_story_id, :from_comment_id], {unique: true, name: "index_links_on_url_and_from_story_id_and_from_comment_id"}],
-    [:links, [:to_comment_id, :from_story_id, :from_comment_id], {unique: true, name: "idx_links_on_to_comment_id_and_from_story_id_and_from_comment_id"}],
-    [:links, [:to_story_id, :from_story_id, :from_comment_id], {unique: true, name: "index_links_on_to_story_id_and_from_story_id_and_from_comment_id"}]
+    [:links, [:url, :from_story_id, :from_comment_id], {unique: true, name: "idx_links_url_and_from_story_id_and_from_comment_id"}],
+    [:links, [:to_comment_id, :from_story_id, :from_comment_id], {unique: true, name: "idx_links_to_comment_id_and_from_story_id_and_from_comment_id"}],
+    [:links, [:to_story_id, :from_story_id, :from_comment_id], {unique: true, name: "idx_links_to_story_id_and_from_story_id_and_from_comment_id"}]
   ]
 
   def up

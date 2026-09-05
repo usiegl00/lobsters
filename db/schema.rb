@@ -19,7 +19,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "message_id", null: false
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.index ["message_id", "message_checksum"], name: "index_action_mailbox_inbound_emails_uniqueness", unique: true
+    t.index ["message_id", "message_checksum"], name: "idx_action_mailbox_inbound_emails_uniqueness", unique: true
   end
 
   create_table "active_storage_attachments", force: :cascade do |t|
@@ -28,8 +28,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "name", null: false
     t.bigint "record_id", null: false
     t.string "record_type", null: false
-    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
-    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+    t.index ["blob_id"], name: "idx_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "idx_active_storage_attachments_uniqueness", unique: true
   end
 
   create_table "active_storage_blobs", force: :cascade do |t|
@@ -41,13 +41,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "key", null: false
     t.text "metadata"
     t.string "service_name", null: false
-    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+    t.index ["key"], name: "idx_active_storage_blobs_on_key", unique: true
   end
 
   create_table "active_storage_variant_records", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
-    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+    t.index ["blob_id", "variation_digest"], name: "idx_active_storage_variant_records_uniqueness", unique: true
   end
 
   create_table "categories", force: :cascade do |t|
@@ -55,14 +55,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.datetime "created_at", precision: nil, null: false
     t.string "token", null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.index ["category"], name: "index_categories_on_category", unique: true
-    t.index ["token"], name: "index_categories_on_token", unique: true
+    t.index ["category"], name: "idx_categories_on_category", unique: true
+    t.index ["token"], name: "idx_categories_on_token", unique: true
   end
 
   create_table "comment_stats", force: :cascade do |t|
     t.integer "average", null: false
     t.date "date", null: false
-    t.index ["date"], name: "index_comment_stats_on_date", unique: true
+    t.index ["date"], name: "idx_comment_stats_on_date", unique: true
   end
 
   create_table "comments", force: :cascade do |t|
@@ -91,12 +91,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.index ["confidence"], name: "confidence_idx"
     t.index ["hat_id"], name: "comments_hat_id_fk"
     t.index ["parent_comment_id"], name: "comments_parent_comment_id_fk"
-    t.index ["score"], name: "index_comments_on_score"
+    t.index ["score"], name: "idx_comments_on_score"
     t.index ["short_id"], name: "short_id", unique: true
     t.index ["story_id", "short_id"], name: "story_id_short_id"
     t.index ["thread_id"], name: "thread_id"
-    t.index ["token"], name: "index_comments_on_token", unique: true
-    t.index ["user_id"], name: "index_comments_on_user_id"
+    t.index ["token"], name: "idx_comments_on_token", unique: true
+    t.index ["user_id"], name: "idx_comments_on_user_id"
   end
 
   create_table "domains", force: :cascade do |t|
@@ -110,9 +110,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.integer "stories_count", default: 0, null: false
     t.string "token", null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.index ["banned_by_user_id"], name: "index_domains_on_banned_by_user_id"
-    t.index ["domain"], name: "index_domains_on_domain", unique: true
-    t.index ["token"], name: "index_domains_on_token", unique: true
+    t.index ["banned_by_user_id"], name: "idx_domains_on_banned_by_user_id"
+    t.index ["domain"], name: "idx_domains_on_domain", unique: true
+    t.index ["token"], name: "idx_domains_on_token", unique: true
   end
 
   create_table "hat_requests", force: :cascade do |t|
@@ -123,7 +123,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "token", null: false
     t.datetime "updated_at", precision: nil
     t.bigint "user_id", null: false
-    t.index ["token"], name: "index_hat_requests_on_token", unique: true
+    t.index ["token"], name: "idx_hat_requests_on_token", unique: true
     t.index ["user_id"], name: "hat_requests_user_id_fk"
   end
 
@@ -139,7 +139,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.datetime "updated_at", precision: nil
     t.bigint "user_id", null: false
     t.index ["granted_by_user_id"], name: "hats_granted_by_user_id_fk"
-    t.index ["token"], name: "index_hats_on_token", unique: true
+    t.index ["token"], name: "idx_hats_on_token", unique: true
     t.index ["user_id"], name: "hats_user_id_fk"
   end
 
@@ -149,8 +149,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "token", null: false
     t.bigint "user_id", null: false
     t.index ["story_id"], name: "hidden_stories_story_id_fk"
-    t.index ["token"], name: "index_hidden_stories_on_token", unique: true
-    t.index ["user_id", "story_id"], name: "index_hidden_stories_on_user_id_and_story_id", unique: true
+    t.index ["token"], name: "idx_hidden_stories_on_token", unique: true
+    t.index ["user_id", "story_id"], name: "idx_hidden_stories_on_user_id_and_story_id", unique: true
   end
 
   create_table "invitation_requests", force: :cascade do |t|
@@ -163,7 +163,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "name", null: false
     t.string "token", null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.index ["token"], name: "index_invitation_requests_on_token", unique: true
+    t.index ["token"], name: "idx_invitation_requests_on_token", unique: true
   end
 
   create_table "invitations", force: :cascade do |t|
@@ -177,7 +177,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.datetime "used_at", precision: nil
     t.bigint "user_id", null: false
     t.index ["new_user_id"], name: "invitations_new_user_id_fk"
-    t.index ["token"], name: "index_invitations_on_token", unique: true
+    t.index ["token"], name: "idx_invitations_on_token", unique: true
     t.index ["user_id"], name: "invitations_user_id_fk"
   end
 
@@ -195,12 +195,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.bigint "to_comment_id"
     t.bigint "to_story_id"
     t.string "url", limit: 250, null: false
-    t.index ["from_comment_id"], name: "index_links_on_from_comment_id"
-    t.index ["from_story_id"], name: "index_links_on_from_story_id"
-    t.index ["normalized_url"], name: "index_links_on_normalized_url"
-    t.index ["to_comment_id", "from_story_id", "from_comment_id"], name: "idx_links_on_to_comment_id_and_from_story_id_and_from_comment_id", unique: true
-    t.index ["to_story_id", "from_story_id", "from_comment_id"], name: "index_links_on_to_story_id_and_from_story_id_and_from_comment_id", unique: true
-    t.index ["url", "from_story_id", "from_comment_id"], name: "index_links_on_url_and_from_story_id_and_from_comment_id", unique: true
+    t.index ["from_comment_id"], name: "idx_links_on_from_comment_id"
+    t.index ["from_story_id"], name: "idx_links_on_from_story_id"
+    t.index ["normalized_url"], name: "idx_links_on_normalized_url"
+    t.index ["to_comment_id", "from_story_id", "from_comment_id"], name: "idx_links_to_comment_id_and_from_story_id_and_from_comment_id", unique: true
+    t.index ["to_story_id", "from_story_id", "from_comment_id"], name: "idx_links_to_story_id_and_from_story_id_and_from_comment_id", unique: true
+    t.index ["url", "from_story_id", "from_comment_id"], name: "idx_links_url_and_from_story_id_and_from_comment_id", unique: true
   end
 
   create_table "mastodon_apps", force: :cascade do |t|
@@ -209,7 +209,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_mastodon_apps_on_name", unique: true
+    t.index ["name"], name: "idx_mastodon_apps_on_name", unique: true
   end
 
   create_table "messages", force: :cascade do |t|
@@ -223,11 +223,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "short_id", limit: 30, default: "", null: false
     t.string "subject", limit: 100
     t.string "token", null: false
-    t.index ["author_user_id"], name: "index_messages_on_author_user_id"
-    t.index ["hat_id"], name: "index_messages_on_hat_id"
+    t.index ["author_user_id"], name: "idx_messages_on_author_user_id"
+    t.index ["hat_id"], name: "idx_messages_on_hat_id"
     t.index ["recipient_user_id"], name: "messages_recipient_user_id_fk"
     t.index ["short_id"], name: "random_hash", unique: true
-    t.index ["token"], name: "index_messages_on_token", unique: true
+    t.index ["token"], name: "idx_messages_on_token", unique: true
   end
 
   create_table "mod_activities", force: :cascade do |t|
@@ -236,8 +236,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "item_type", null: false
     t.string "token", null: false
     t.datetime "updated_at", null: false
-    t.index ["item_type", "item_id"], name: "index_mod_activities_on_item_type_and_item_id", unique: true
-    t.index ["token"], name: "index_mod_activities_on_token", unique: true
+    t.index ["item_type", "item_id"], name: "idx_mod_activities_on_item_type_and_item_id", unique: true
+    t.index ["token"], name: "idx_mod_activities_on_token", unique: true
   end
 
   create_table "mod_mail_messages", force: :cascade do |t|
@@ -246,7 +246,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.bigint "mod_mail_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["mod_mail_id"], name: "index_mod_mail_messages_on_mod_mail_id"
+    t.index ["mod_mail_id"], name: "idx_mod_mail_messages_on_mod_mail_id"
     t.index ["user_id"], name: "fk_rails_40fa20cab5"
   end
 
@@ -255,7 +255,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.bigint "mod_mail_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["mod_mail_id"], name: "index_mod_mail_recipients_on_mod_mail_id"
+    t.index ["mod_mail_id"], name: "idx_mod_mail_recipients_on_mod_mail_id"
     t.index ["user_id"], name: "fk_rails_7a6d5232be"
   end
 
@@ -265,8 +265,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.bigint "reference_id", null: false
     t.string "reference_type", null: false
     t.datetime "updated_at", null: false
-    t.index ["mod_mail_id"], name: "index_mod_mail_references_on_mod_mail_id"
-    t.index ["reference_type", "reference_id"], name: "index_mod_mail_references_on_reference"
+    t.index ["mod_mail_id"], name: "idx_mod_mail_references_on_mod_mail_id"
+    t.index ["reference_type", "reference_id"], name: "idx_mod_mail_references_on_reference"
   end
 
   create_table "mod_mails", force: :cascade do |t|
@@ -275,7 +275,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "short_id", limit: 10, null: false
     t.string "subject", null: false
     t.datetime "updated_at", null: false
-    t.index ["short_id"], name: "index_mod_mails_on_short_id", unique: true
+    t.index ["short_id"], name: "idx_mod_mails_on_short_id", unique: true
   end
 
   create_table "mod_notes", force: :cascade do |t|
@@ -285,9 +285,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.text "note", null: false
     t.string "token", null: false
     t.bigint "user_id", null: false
-    t.index ["id", "user_id"], name: "index_mod_notes_on_id_and_user_id"
+    t.index ["id", "user_id"], name: "idx_mod_notes_on_id_and_user_id"
     t.index ["moderator_user_id"], name: "mod_notes_moderator_user_id_fk"
-    t.index ["token"], name: "index_mod_notes_on_token", unique: true
+    t.index ["token"], name: "idx_mod_notes_on_token", unique: true
     t.index ["user_id"], name: "mod_notes_user_id_fk"
   end
 
@@ -306,16 +306,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "token", null: false
     t.datetime "updated_at", precision: nil, null: false
     t.bigint "user_id"
-    t.index ["category_id"], name: "index_moderations_on_category_id"
+    t.index ["category_id"], name: "idx_moderations_on_category_id"
     t.index ["comment_id"], name: "moderations_comment_id_fk"
-    t.index ["created_at"], name: "index_moderations_on_created_at"
-    t.index ["domain_id"], name: "index_moderations_on_domain_id"
+    t.index ["created_at"], name: "idx_moderations_on_created_at"
+    t.index ["domain_id"], name: "idx_moderations_on_domain_id"
     t.index ["moderator_user_id"], name: "moderations_moderator_user_id_fk"
-    t.index ["origin_id"], name: "index_moderations_on_origin_id"
+    t.index ["origin_id"], name: "idx_moderations_on_origin_id"
     t.index ["story_id"], name: "moderations_story_id_fk"
     t.index ["tag_id"], name: "moderations_tag_id_fk"
-    t.index ["token"], name: "index_moderations_on_token", unique: true
-    t.index ["user_id"], name: "index_moderations_on_user_id"
+    t.index ["token"], name: "idx_moderations_on_token", unique: true
+    t.index ["user_id"], name: "idx_moderations_on_user_id"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -326,8 +326,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "token", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
-    t.index ["token"], name: "index_notifications_on_token", unique: true
+    t.index ["notifiable_type", "notifiable_id"], name: "idx_notifications_on_notifiable"
+    t.index ["token"], name: "idx_notifications_on_token", unique: true
     t.index ["user_id", "notifiable_type", "notifiable_id"], name: "idx_on_user_id_notifiable_type_notifiable_id_ffac34041e", unique: true
   end
 
@@ -341,10 +341,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.integer "stories_count", default: 0, null: false
     t.string "token", null: false
     t.datetime "updated_at", null: false
-    t.index ["banned_by_user_id"], name: "index_origins_on_banned_by_user_id"
-    t.index ["domain_id"], name: "index_origins_on_domain_id"
-    t.index ["identifier"], name: "index_origins_on_identifier", unique: true
-    t.index ["token"], name: "index_origins_on_token", unique: true
+    t.index ["banned_by_user_id"], name: "idx_origins_on_banned_by_user_id"
+    t.index ["domain_id"], name: "idx_origins_on_domain_id"
+    t.index ["identifier"], name: "idx_origins_on_identifier", unique: true
+    t.index ["token"], name: "idx_origins_on_token", unique: true
   end
 
   create_table "read_ribbons", force: :cascade do |t|
@@ -353,8 +353,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.bigint "story_id", null: false
     t.datetime "updated_at", precision: nil, null: false
     t.bigint "user_id", null: false
-    t.index ["story_id"], name: "index_read_ribbons_on_story_id"
-    t.index ["user_id"], name: "index_read_ribbons_on_user_id"
+    t.index ["story_id"], name: "idx_read_ribbons_on_story_id"
+    t.index ["user_id"], name: "idx_read_ribbons_on_user_id"
   end
 
   create_table "saved_stories", force: :cascade do |t|
@@ -364,8 +364,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.datetime "updated_at", precision: nil, null: false
     t.bigint "user_id", null: false
     t.index ["story_id"], name: "saved_stories_story_id_fk"
-    t.index ["token"], name: "index_saved_stories_on_token", unique: true
-    t.index ["user_id", "story_id"], name: "index_saved_stories_on_user_id_and_story_id", unique: true
+    t.index ["token"], name: "idx_saved_stories_on_token", unique: true
+    t.index ["user_id", "story_id"], name: "idx_saved_stories_on_user_id_and_story_id", unique: true
   end
 
 # Could not dump table "sqlite_stat1" because of following StandardError
@@ -404,20 +404,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.bigint "user_id", null: false
     t.boolean "user_is_author", default: false, null: false
     t.boolean "user_is_following", default: false, null: false
-    t.index ["created_at"], name: "index_stories_on_created_at"
-    t.index ["domain_id"], name: "index_stories_on_domain_id"
+    t.index ["created_at"], name: "idx_stories_on_created_at"
+    t.index ["domain_id"], name: "idx_stories_on_domain_id"
     t.index ["hotness"], name: "hotness_idx"
-    t.index ["id", "is_deleted"], name: "index_stories_on_id_and_is_deleted"
-    t.index ["last_comment_at"], name: "index_stories_on_last_comment_at"
-    t.index ["mastodon_id"], name: "index_stories_on_mastodon_id"
-    t.index ["merged_story_id", "hotness"], name: "index_stories_on_merged_story_id_and_hotness"
-    t.index ["normalized_url"], name: "index_stories_on_normalized_url"
-    t.index ["origin_id"], name: "index_stories_on_origin_id"
-    t.index ["score"], name: "index_stories_on_score"
+    t.index ["id", "is_deleted"], name: "idx_stories_on_id_and_is_deleted"
+    t.index ["last_comment_at"], name: "idx_stories_on_last_comment_at"
+    t.index ["mastodon_id"], name: "idx_stories_on_mastodon_id"
+    t.index ["merged_story_id", "hotness"], name: "idx_stories_on_merged_story_id_and_hotness"
+    t.index ["normalized_url"], name: "idx_stories_on_normalized_url"
+    t.index ["origin_id"], name: "idx_stories_on_origin_id"
+    t.index ["score"], name: "idx_stories_on_score"
     t.index ["short_id"], name: "unique_short_id", unique: true
-    t.index ["token"], name: "index_stories_on_token", unique: true
+    t.index ["token"], name: "idx_stories_on_token", unique: true
     t.index ["url"], name: "url"
-    t.index ["user_id"], name: "index_stories_on_user_id"
+    t.index ["user_id"], name: "idx_stories_on_user_id"
   end
 
   create_table "story_texts", force: :cascade do |t|
@@ -475,9 +475,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "tag", limit: 25, null: false, collation: "NOCASE"
     t.string "token", null: false
     t.datetime "updated_at", null: false
-    t.index ["category_id"], name: "index_tags_on_category_id"
+    t.index ["category_id"], name: "idx_tags_on_category_id"
     t.index ["tag"], name: "tag", unique: true
-    t.index ["token"], name: "index_tags_on_token", unique: true
+    t.index ["token"], name: "idx_tags_on_token", unique: true
   end
 
   create_table "usernames", force: :cascade do |t|
@@ -518,14 +518,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.string "username", limit: 50, collation: "NOCASE"
     t.index ["banned_by_user_id"], name: "users_banned_by_user_id_fk"
     t.index ["disabled_invite_by_user_id"], name: "users_disabled_invite_by_user_id_fk"
-    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["email"], name: "idx_users_on_email", unique: true
     t.index ["invited_by_user_id"], name: "users_invited_by_user_id_fk"
     t.index ["mailing_list_mode"], name: "mailing_list_enabled"
     t.index ["mailing_list_token"], name: "mailing_list_token", unique: true
     t.index ["password_reset_token"], name: "password_reset_token", unique: true
     t.index ["rss_token"], name: "rss_token", unique: true
     t.index ["session_token"], name: "session_hash", unique: true
-    t.index ["token"], name: "index_users_on_token", unique: true
+    t.index ["token"], name: "idx_users_on_token", unique: true
     t.index ["username"], name: "username", unique: true
   end
 
@@ -536,7 +536,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
     t.datetime "updated_at", precision: nil, null: false
     t.bigint "user_id", null: false
     t.integer "vote", limit: 1, null: false
-    t.index ["comment_id"], name: "index_votes_on_comment_id"
+    t.index ["comment_id"], name: "idx_votes_on_comment_id"
     t.index ["story_id"], name: "votes_story_id_fk"
     t.index ["user_id", "comment_id"], name: "user_id_comment_id"
     t.index ["user_id", "story_id"], name: "user_id_story_id"

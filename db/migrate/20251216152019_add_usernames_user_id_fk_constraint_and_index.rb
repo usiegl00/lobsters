@@ -6,13 +6,13 @@ class AddUsernamesUserIdFkConstraintAndIndex < ActiveRecord::Migration[8.0]
     end
 
     unless index_exists?(:usernames, :user_id)
-      add_index :usernames, :user_id, name: "index_usernames_user_id"
+      add_index :usernames, :user_id, name: "idx_usernames_user_id"
     end
   end
 
   def down
-    if index_exists?(:usernames, :user_id, name: "index_usernames_user_id")
-      remove_index :usernames, :user_id, name: "index_usernames_user_id"
+    if index_exists?(:usernames, :user_id, name: "idx_usernames_user_id")
+      remove_index :usernames, :user_id, name: "idx_usernames_user_id"
     end
 
     if foreign_key_exists?(:usernames, column: :user_id)
