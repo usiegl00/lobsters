@@ -11,22 +11,11 @@ module UsernameAttribute
     validates :username,
       format: {with: /\A#{VALID_USERNAME}\z/o},
       length: {maximum: 50}
-    validate :underscores_and_dashes_in_username
 
     validates_each :username do |record, attr, value|
       if BANNED_USERNAMES.include?(value.to_s.downcase) || value.starts_with?("tag-")
         record.errors.add(attr, "is not permitted")
       end
     end
-  end
-
-  def underscores_and_dashes_in_username
-    username_regex = "^" + username.gsub(/_|-/, "[-_]") + "$"
-    return unless username_regex.include?("[-_]")
-
-    collisions = self.class
-      .where(self.class.arel_table[:username].matches_regexp(username_regex))
-      .where.not(id: id)
-    errors.add(:username, "is already in use (perhaps swapping _ and -)") if collisions.any?
   end
 end
