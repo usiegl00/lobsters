@@ -11,6 +11,8 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.1].define(version: 2026_08_14_181241) do
+  execute("CREATE COLLATION IF NOT EXISTS \"NOCASE\" (provider = icu, locale = 'und-u-ks-level2', deterministic = false);")
+
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
