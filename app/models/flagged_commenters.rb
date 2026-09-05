@@ -53,27 +53,79 @@ class FlaggedCommenters
   end
 
   def commenters
-    Rails.cache.fetch("flagged_commenters_#{interval}_#{cache_time}",
-      expires_in: cache_time) {
+    Rails.cache.fetch(
+      "flagged_commenters_#{interval}_#{cache_time}",
+      expires_in: cache_time
+    ) do
       rank = 0
-      User.active.joins(:comments)
-        .where("comments.created_at >= ?", period)
-        .group("comments.user_id")
-        .select("
-          users.id, users.username,
-          (sum(flags) - #{avg_sum_flags})/#{stddev_sum_flags} as sigma,
-          count(distinct if(flags > 0, comments.id, null)) as n_comments,
-          count(distinct if(flags > 0, story_id, null)) as n_stories,
-          sum(flags) as n_flags,
-          sum(flags)/count(distinct comments.id) as average_flags,
-          (
-            count(distinct if(flags > 0, comments.id, null)) /
-            count(distinct comments.id)
-          ) * 100 as percent_flagged")
-        .having("n_comments > 4 and n_stories > 1 and n_flags >= 10 and percent_flagged > 10")
-        .order(sigma: :desc)
+
+      users = User.arel_table
+      comments = Comment.arel_table
+
+      quoted = ->(value) { Arel::Nodes.build_quoted(value) }
+
+      flagged_comment_id = Arel::Nodes::Case.new
+        .when(comments[:flags].gt(0))
+        .then(comments[:id])
+
+      flagged_story_id = Arel::Nodes::Case.new
+        .when(comments[:flags].gt(0))
+        .then(comments[:story_id])
+
+      n_comments = Arel::Nodes::Count.new(
+        [flagged_comment_id],
+        true
+      )
+
+      n_stories = Arel::Nodes::Count.new(
+        [flagged_story_id],
+        true
+      )
+
+      n_flags = comments[:flags].sum
+
+      total_comments = Arel::Nodes::Count.new(
+        [comments[:id]],
+        true
+      )
+
+      # Multiplying by 1.0 forces non-integer division on databases
+      # where integer / integer would truncate.
+      average_flags =
+        (n_flags * quoted.call(1.0)) / total_comments
+
+      percent_flagged =
+        ((n_comments * quoted.call(1.0)) / total_comments) *
+          quoted.call(100.0)
+
+      sigma =
+        ((n_flags - quoted.call(avg_sum_flags)) * quoted.call(1.0)) /
+          quoted.call(stddev_sum_flags)
+
+      having =
+        n_comments.gt(4)
+          .and(n_stories.gt(1))
+          .and(n_flags.gteq(10))
+          .and(percent_flagged.gt(10))
+
+      User.active
+        .joins(:comments)
+        .where(comments[:created_at].gteq(period))
+        .group(users[:id], users[:username])
+        .select(
+          users[:id],
+          users[:username],
+          sigma.as("sigma"),
+          n_comments.as("n_comments"),
+          n_stories.as("n_stories"),
+          n_flags.as("n_flags"),
+          average_flags.as("average_flags"),
+          percent_flagged.as("percent_flagged")
+        )
+        .having(having)
+        .order(sigma.desc)
         .limit(30)
-        .each_with_object({}) { |u, hash|
+        .each_with_object({}) do |u, hash|
           hash[u.id] = {
             username: u.username,
             rank: rank += 1,
@@ -85,7 +137,7 @@ class FlaggedCommenters
             stddev: 0,
             percent_flagged: u.percent_flagged
           }
-        }
-    }
+        end
+    end
   end
 end
