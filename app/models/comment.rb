@@ -55,9 +55,17 @@ class Comment < ApplicationRecord
   scope :accessible_to_user, ->(user) { (user && user.is_moderator?) ? all : active }
   scope :recent, -> { where(created_at: (6.months.ago..)) }
   scope :above_average, -> {
+    comments = arel_table
+    stats = Arel::Table.new(:comment_stats)
+
+    average = Arel::Nodes::NamedFunction.new(
+      "COALESCE",
+      [stats[:average], Arel::Nodes.build_quoted(3)]
+    )
+
     joins(:story)
-      .joins("left outer join comment_stats on date(comments.created_at) = comment_stats.date")
-      .where("comments.score > coalesce(comment_stats.`average`, 3)")
+      .joins("LEFT OUTER JOIN comment_stats ON DATE(comments.created_at) = comment_stats.date")
+      .where(comments[:score].gt(average))
   }
   scope :on_stories_not_authored_by, ->(user) {
     joins(:story)
