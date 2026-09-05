@@ -376,11 +376,20 @@ class Comment < ApplicationRecord
     update_query = if FullTextSearch.postgresql?
       <<~SQL
         UPDATE comments SET
-          score = (select coalesce(sum(vote), 0) from votes where comment_id = comments.id),
-          flags = (select count(*) from votes where comment_id = comments.id and vote = -1),
-          confidence = ?,
-          confidence_order = decode(?, 'hex')
-        WHERE id = ?
+          score = (
+            SELECT COALESCE(SUM(vote), 0)
+            FROM votes
+            WHERE comment_id = comments.id
+          ),
+          flags = (
+            SELECT COUNT(*)
+            FROM votes
+            WHERE comment_id = comments.id
+              AND vote = -1
+          ),
+          confidence = $1,
+          confidence_order = decode($2::text, 'hex')
+        WHERE id = $3
       SQL
     else
       <<~SQL
